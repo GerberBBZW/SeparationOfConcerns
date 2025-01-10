@@ -2,65 +2,86 @@ public class PrimeFactors
 {
     public static void Factor(List<int> numbers)
     {
-        // first, compute prime numbers up to each number
-        var primesUpToNumber = new Dictionary<int, List<int>>();
+        if (numbers == null || numbers.Count == 0)
+        {
+            throw new ArgumentException("The input list cannot be null or empty.");
+        }
+
+        var primesCache = GeneratePrimesUpTo(numbers.Max());
+
         foreach (var number in numbers)
         {
             if (number < 1)
             {
-                throw new ArgumentException("negative numbers are not supported");
+                throw new ArgumentException("Negative numbers are not supported.");
             }
-            primesUpToNumber.Add(number, new List<int>());
+
+            var factors = Factorize(number, primesCache);
+            PrintFactors(number, factors);
+        }
+    }
+
+    public static Dictionary<int, List<int>> GeneratePrimesUpTo(int max)
+    {
+        var primesUpToNumber = new Dictionary<int, List<int>>();
+
+        for (var number = 2; number <= max; number++)
+        {
+            primesUpToNumber[number] = new List<int>();
             for (var candidate = 2; candidate <= number; candidate++)
             {
-                var isPrime = true;
-                for (var i = 2; i < candidate; i++)
-                {
-                    if (candidate % i == 0)
-                    {
-                        isPrime = false;
-                        break;
-                    }
-                }
-                if (isPrime)
+                if (IsPrime(candidate))
                 {
                     primesUpToNumber[number].Add(candidate);
                 }
             }
         }
 
-        // second, factorize number by its primes
-        foreach (var number in primesUpToNumber.Keys)
+        return primesUpToNumber;
+    }
+
+    public static bool IsPrime(int candidate)
+    {
+        if (candidate < 2) return false;
+
+        for (var i = 2; i * i <= candidate; i++)
         {
-            var primes = primesUpToNumber[number];
-            var factors = new List<int>() { };
-            if (primes.Count == 0)
+            if (candidate % i == 0)
             {
-                factors.Add(number);
+                return false;
             }
-            else
-            {
-                var remainder = number;
-                for (var i = 0; i < primes.Count && remainder > 0;)
-                {
-                    var prime = primes[i];
-                    if (remainder % prime == 0)
-                    {
-                        remainder /= primes[i];
-                        factors.Add(prime);
-                    }
-                    else
-                    {
-                        i++;
-                    }
-                }
-            }
-            Console.Write($"{number}: ");
-            foreach (var factor in factors)
-            {
-                Console.Write($"{factor} ");
-            }
-            Console.WriteLine();
         }
+
+        return true;
+    }
+
+    public static List<int> Factorize(int number, Dictionary<int, List<int>> primesCache)
+    {
+        var primes = primesCache[number];
+        var factors = new List<int>();
+        var remainder = number;
+
+        foreach (var prime in primes)
+        {
+            while (remainder % prime == 0)
+            {
+                remainder /= prime;
+                factors.Add(prime);
+            }
+
+            if (remainder == 1) break;
+        }
+
+        if (remainder > 1)
+        {
+            factors.Add(remainder);
+        }
+
+        return factors;
+    }
+
+    public static void PrintFactors(int number, List<int> factors)
+    {
+        Console.WriteLine($"{number}: {string.Join(" ", factors)}");
     }
 }
